@@ -21,22 +21,22 @@ class GildedRose
 
   def update_quality
     @items.each do |item|
-      GildedRoseFactory.update(item)
+      GildedRoseFactory.create(item).update
     end
   end
 end
 
 class GildedRoseFactory
-  def self.update(item)
+  def self.create(item)
     case item.name
     when "Backstage passes to a TAFKAL80ETC concert"
-      BackstagePasses.new(item).update
+      BackstagePasses.new(item)
     when "Aged Brie"
-      AgedBrie.new(item).update
+      AgedBrie.new(item)
     when "Sulfuras, Hand of Ragnaros"
-      SulfurasItem.new(item).update
+      SulfurasItem.new(item)
     else
-      OtherItem.new(item).update
+      OtherItem.new(item)
     end
   end
 end
