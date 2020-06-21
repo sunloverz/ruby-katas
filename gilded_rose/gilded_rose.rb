@@ -12,18 +12,6 @@ class Item
   def to_s()
     "#{@name}, #{@sell_in}, #{@quality}"
   end
-
-  def increase_quality
-    @quality += 1
-  end
-
-  def decrease_quality
-    @quality -= 1
-  end
-
-  def decrease_sell_in
-    @sell_in -= 1
-  end
 end
 
 class GildedRose
@@ -33,117 +21,79 @@ class GildedRose
 
   def update_quality
     @items.each do |item|
-      case item.name
-      when "Backstage passes to a TAFKAL80ETC concert"
-        BackstagePasses.update(item)
-      when "Aged Brie"
-        AgedBrie.update(item)
-      when "Sulfuras, Hand of Ragnaros"
-      else
-        OtherItem.update(item)
-      end
+      GildedRoseFactory.create(item)
     end
   end
 end
 
-class ItemWrapper < SimpleDelegator
-
+class GildedRoseFactory
+  def self.create(item)
+    case item.name
+    when "Backstage passes to a TAFKAL80ETC concert"
+      BackstagePasses.new(item).update
+    when "Aged Brie"
+      AgedBrie.new(item).update
+    when "Sulfuras, Hand of Ragnaros"
+    else
+      OtherItem.new(item).update
+    end
+  end
 end
 
-module ItemModule
-  def is_expired(item)
+class ItemWrapper
+  attr_accessor :item
+
+  def initialize(item)
+    @item = item
+  end
+
+  def increase_quality
+    item.quality += 1 if item.quality < 50
+  end
+
+  def decrease_quality
+    item.quality -= 1 if item.quality > 0
+  end
+
+  def decrease_sell_in
+    item.sell_in -= 1
+  end
+
+  def is_expired
     item.sell_in < 0
   end
+end
 
-  def is_quality_less_fifty(item)
-    item.quality < 50
+class OtherItem < ItemWrapper
+  def update
+    decrease_sell_in
+    decrease_quality
+    decrease_quality if is_expired
   end
 end
 
-class OtherItem
-  extend ItemModule
-
-  def self.update(item)
-    item.decrease_sell_in
-    decrease_quality_if_has_one(item)
-    decrease_quality_if_expired(item)
-  end
-
-  def self.decrease_quality_if_expired(item)
-    if has_quality(item) && is_expired(item)
-      item.decrease_quality
-    end
-  end
-
-  def self.decrease_quality_if_has_one(item)
-    if has_quality(item)
-      item.decrease_quality
-    end
-  end
-
-  def self.has_quality(item)
-    item.quality > 0
+class AgedBrie < ItemWrapper
+  def update
+    decrease_sell_in
+    increase_quality
+    increase_quality if is_expired
   end
 end
 
-class AgedBrie
-  extend ItemModule
-
-  def self.update(item)
-    item.decrease_sell_in
-    increase_quality_if_less_fifty(item)
-    increase_quality_if_not_expired(item)
+class BackstagePasses < ItemWrapper
+  def update
+    decrease_sell_in
+    increase_quality
+    increase_quality if is_ten_days_to_sell?
+    increase_quality if is_five_days_to_sell?
+    item.quality = 0 if is_expired
   end
 
-  def self.increase_quality_if_not_expired(item)
-    if is_quality_less_fifty(item) && is_expired(item)
-      item.increase_quality
-    end
-  end
-
-  def self.increase_quality_if_less_fifty(item)
-    if is_quality_less_fifty(item)
-      item.increase_quality
-    end
-  end
-end
-
-class BackstagePasses
-  extend ItemModule
-
-  def self.update(item)
-    item.decrease_sell_in
-    if is_quality_less_fifty(item)
-      item.increase_quality
-      increase_quality_if_ten_days(item)
-      increase_quality_if_five_days(item)
-      drop_quality_after_concert(item)
-    end
-  end
-
-  def self.drop_quality_after_concert(item)
-    if is_expired(item)
-      item.quality = 0
-    end
-  end
-
-  def self.increase_quality_if_ten_days(item)
-    if is_ten_days_to_sell(item) && is_quality_less_fifty(item)
-      item.increase_quality
-    end
-  end
-
-  def self.increase_quality_if_five_days(item)
-    if is_five_days_to_sell(item) && is_quality_less_fifty(item)
-      item.increase_quality
-    end
-  end
-
-  def self.is_five_days_to_sell(item)
+  def is_five_days_to_sell?
     item.sell_in < 6
   end
 
-  def self.is_ten_days_to_sell(item)
+  def is_ten_days_to_sell?
     item.sell_in < 11
   end
 end
