@@ -21,19 +21,20 @@ class GildedRose
 
   def update_quality
     @items.each do |item|
-      GildedRoseFactory.create(item)
+      GildedRoseFactory.update(item)
     end
   end
 end
 
 class GildedRoseFactory
-  def self.create(item)
+  def self.update(item)
     case item.name
     when "Backstage passes to a TAFKAL80ETC concert"
       BackstagePasses.new(item).update
     when "Aged Brie"
       AgedBrie.new(item).update
     when "Sulfuras, Hand of Ragnaros"
+      SulfurasItem.new(item).update
     else
       OtherItem.new(item).update
     end
@@ -69,6 +70,11 @@ class OtherItem < ItemWrapper
     decrease_sell_in
     decrease_quality
     decrease_quality if is_expired
+  end
+end
+
+class SulfurasItem < ItemWrapper
+  def update
   end
 end
 
