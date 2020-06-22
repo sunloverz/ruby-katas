@@ -38,10 +38,10 @@ class TennisGame1
     else
       (1...3).each do |i|
         if (i==1)
-          tempScore = 1
+          tempScore = @p1points
         else
           result+="-"
-          tempScore = 3
+          tempScore = @p2points
         end
         result += {
             0 => "Love",
